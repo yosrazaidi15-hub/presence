@@ -4,10 +4,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class _ScanResult {
-  const _ScanResult(this.ok, this.message);
+  const _ScanResult(this.ok, this.message,{this.already=false});
 
   final bool ok;
   final String message;
+  final bool already;
 }
 
 /// Écran de scan (étudiant) : lit le QR code de la séance et enregistre la présence.
@@ -52,6 +53,8 @@ class _ScanPageState extends State<ScanPage> {
         return _ScanResult(
           true,
           'Ta présence est déjà enregistrée pour $matiere.',
+          already: true,
+
         );
       }
 
@@ -62,7 +65,10 @@ class _ScanPageState extends State<ScanPage> {
         'matricule': profile?['matricule'],
         'scannedAt': FieldValue.serverTimestamp(),
       });
-      return _ScanResult(true, 'Présence enregistrée pour $matiere.');
+      return _ScanResult(
+        true,
+        '${user.email}\nTa présence est enregistrée pour $matiere.',
+      );
     } on FirebaseException catch (e) {
       return _ScanResult(false, e.message ?? e.code);
     } catch (_) {
@@ -81,9 +87,13 @@ class _ScanPageState extends State<ScanPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: Icon(
-          result.ok ? Icons.check_circle : Icons.error_outline,
+          result.already
+              ? Icons.info_outline
+              : (result.ok ? Icons.check_circle : Icons.error_outline),
           size: 48,
-          color: result.ok ? Colors.green : Theme.of(ctx).colorScheme.error,
+          color: result.already
+              ? Colors.orange
+              : (result.ok ? Colors.green : Theme.of(ctx).colorScheme.error),
         ),
         content: Text(result.message, textAlign: TextAlign.center),
         actions: [
